@@ -5,10 +5,11 @@ import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 
 const App = () => {
-  const [persons, setPersons] = useState([])
+  const [ persons, setPersons ] = useState([])
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ filterName, setNewFilter] = useState('')
+  const [ message, setMessage ] = useState(null)
 
   useEffect(() => {
     personService
@@ -36,12 +37,26 @@ const App = () => {
             setPersons(persons.map(person => person.id !== oldPerson.id ? person : response.data))
             setNewName('')
             setNewNumber('')
+            setMessage(`Replaced ${changedPerson.name}'s number with the number ${changedPerson.number} succesfully.`)
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
+          })
+          .catch(error => {
+            setMessage(`Person '${oldPerson.name}' was already removed from server`)
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
+            setPersons(persons.filter(n => n.name !== newName))
           })
       }
     } else if (persons.some(person => person.name.toLowerCase() === newName.toLowerCase())) {
-      alert(`${newName} is already added to phonebook`)
       setNewName('')
       setNewNumber('')
+      setMessage(`${newName} is already added to phonebook`)
+      setTimeout(() => {
+        setMessage(null)
+      }, 5000)
     } else {
       personService
         .create(personObject)
@@ -49,6 +64,10 @@ const App = () => {
           setPersons(persons.concat(response.data))
           setNewName('')
           setNewNumber('')
+          setMessage(`${newName} added to the phonebook succesfully.`)
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
         })
     }
   }
@@ -59,6 +78,10 @@ const App = () => {
       .remove(id)
         .then(response => {
           setPersons(persons.filter(n => n.id !== id))
+          setMessage(`${newName} removed from the phonebook succesfully.`)
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
       })
     }
   }
@@ -74,9 +97,30 @@ const App = () => {
   const handleFilterChange = (event) => {
     setNewFilter(event.target.value)
   }
+
+  const Notification = ({ message }) => {
+    if (message === null) {
+      return null
+    } else if ( message.includes("succesfully")) {
+      return (
+        <div className="success">
+          {message}
+        </div>
+      )
+    } else {
+      return (
+        <div className="error">
+          {message}
+        </div>
+      )
+    }
+  }
+
+
   return (
     <div>
       <h2>Phonebook</h2>
+        <Notification message={message} />
         <Filter filterName={filterName} handleFilterChange={handleFilterChange} persons={persons} />
       <h2>Add a new person</h2>
         <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
